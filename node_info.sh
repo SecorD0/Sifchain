@@ -141,10 +141,10 @@ main() {
 	local validator_address=`jq -r ".operator_address" <<< $node_info`
 	local validator_pub_key=`$daemon tendermint show-validator`
 	local jailed=`jq -r ".jailed" <<< $node_info`
-	local delegated=`bc -l <<< "$(jq -r ".tokens" <<< $node_info)/1000000" 2>/dev/null`
+	local delegated=`bc -l <<< "$(jq -r ".tokens" <<< $node_info)/1000000000000000000" 2>/dev/null`
 	local voting_power=`jq -r ".ValidatorInfo.VotingPower" <<< $status`
 	if [ -n "$wallet_address" ]; then
-		local balance=`bc -l <<< "$($daemon query bank balances "$wallet_address" -o json --node "$node_tcp" | jq -r ".balances[0].amount")/1000000"`
+		local balance=`bc -l <<< "$($daemon query bank balances "$wallet_address" -o json --node "$node_tcp" | jq -r ".balances[0].amount")/1000000000000000000"`
 	fi
 
 	# Output
