@@ -7,6 +7,7 @@ node_dir="$HOME/.sifnoded/"
 wallet_name="$sifchain_wallet_name"
 wallet_address="$sifchain_wallet_address"
 wallet_address_variable="sifchain_wallet_address"
+explorer_url_template="https://www.mintscan.io/sifchain/validators/"
 
 # Default variables
 language="EN"
@@ -75,6 +76,7 @@ main() {
 		local t_sy3="Нода синхронизирована:      ${C_LGn}да${RES}"
 		
 		local t_va="\nАдрес валидатора:           ${C_LGn}%s${RES}"
+		local t_eu="Страница в эксплорере:      ${C_LGn}%s${RES}"
 		local t_pk="Публичный ключ валидатора:  ${C_LGn}%s${RES}"
 		local t_nij1="Валидатор в тюрьме:         ${C_LR}да${RES}"
 		local t_nij2="Валидатор в тюрьме:         ${C_LGn}нет${RES}"	
@@ -102,6 +104,7 @@ main() {
 		local t_sy3="Node is synchronized:    ${C_LGn}yes${RES}"
 		
 		local t_va="\nValidator address:       ${C_LGn}%s${RES}"
+		local t_eu="Page in explorer:        ${C_LGn}%s${RES}"
 		local t_pk="Validator public key:    ${C_LGn}%s${RES}"
 		local t_nij1="Validator in a jail:     ${C_LR}yes${RES}"
 		local t_nij2="Validator in a jail:     ${C_LGn}no${RES}"
@@ -139,6 +142,7 @@ main() {
 	local catching_up=`jq -r ".SyncInfo.catching_up" <<< $status`
 	
 	local validator_address=`jq -r ".operator_address" <<< $node_info`
+	local explorer_url="${explorer_url_template}${validator_address}"
 	local validator_pub_key=`$daemon tendermint show-validator`
 	local jailed=`jq -r ".jailed" <<< $node_info`
 	local delegated=`bc -l <<< "$(jq -r ".tokens" <<< $node_info)/1000000000000000000" 2>/dev/null`
@@ -149,7 +153,7 @@ main() {
 
 	# Output
 	if [ "$raw_output" = "true" ]; then
-		printf_n '{"moniker": "%s", "identity": "%s", "website": "%s", "details": "%s", "network": "%s", "node_id": "%s", "node_version": "%s", "latest_block_height": %d, "catching_up": %b, "validator_address": "%s", "validator_pub_key": "%s", "jailed": %b, "delegated": %.4f, "voting_power": %.4f, "wallet_address": "%s", "balance": %.4f}' \
+		printf_n '{"moniker": "%s", "identity": "%s", "website": "%s", "details": "%s", "network": "%s", "node_id": "%s", "node_version": "%s", "latest_block_height": %d, "catching_up": %b, "validator_address": "%s", "explorer_url": "%s", "validator_pub_key": "%s", "jailed": %b, "delegated": %.4f, "voting_power": %.4f, "wallet_address": "%s", "balance": %.4f}' \
 "$moniker" \
 "$identity" \
 "$website" \
@@ -160,6 +164,7 @@ main() {
 "$latest_block_height" \
 "$catching_up" \
 "$validator_address" \
+"$explorer_url" \
 "$validator_pub_key" \
 "$jailed" \
 "$delegated" \
@@ -187,6 +192,7 @@ main() {
 		fi
 		
 		printf_n "$t_va" "$validator_address"
+		printf_n "$t_eu" "$explorer_url"
 		printf_n "$t_pk" "$validator_pub_key"
 		if [ "$jailed" = "true" ]; then
 			printf_n "$t_nij1"
