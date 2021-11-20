@@ -2,11 +2,11 @@
 # Config
 daemon="`which sifnoded`"
 token_name="rowan"
-current_rpc=""
 node_dir="$HOME/.sifnoded/"
 wallet_name="$sifchain_wallet_name"
 wallet_address="$sifchain_wallet_address"
 wallet_address_variable="sifchain_wallet_address"
+global_rpc=""
 explorer_url_template="https://www.mintscan.io/sifchain/validators/"
 
 # Default variables
@@ -127,10 +127,10 @@ main() {
 		fi
 	fi
 	
-	local node_tcp=`cat "${node_dir}config/config.toml" | grep -oPm1 "(?<=^laddr = \")([^%]+)(?=\")"`
-	local status=`$daemon status --node "$node_tcp" 2>&1`
+	local local_rpc=`cat "${node_dir}config/config.toml" | grep -oPm1 "(?<=^laddr = \")([^%]+)(?=\")"`
+	local status=`$daemon status --node "$local_rpc" 2>&1`
 	local moniker=`jq -r ".NodeInfo.moniker" <<< $status`
-	local node_info=`$daemon query staking validators --node "$node_tcp" --limit 1500 --output json | jq -r '.validators[] | select(.description.moniker=='\"$moniker\"')'`
+	local node_info=`$daemon query staking validators --node "$local_rpc" --limit 1500 --output json | jq -r '.validators[] | select(.description.moniker=='\"$moniker\"')'`
 	local identity=`jq -r ".description.identity" <<< $node_info`
 	local website=`jq -r ".description.website" <<< $node_info`
 	local details=`jq -r ".description.details" <<< $node_info`
@@ -142,13 +142,13 @@ main() {
 	local catching_up=`jq -r ".SyncInfo.catching_up" <<< $status`
 	
 	local validator_address=`jq -r ".operator_address" <<< $node_info`
-	local explorer_url="${explorer_url_template}${validator_address}"
+	if [ -n "$validator_address" ]; then local explorer_url="${explorer_url_template}${validator_address}"; fi
 	local validator_pub_key=`$daemon tendermint show-validator`
 	local jailed=`jq -r ".jailed" <<< $node_info`
 	local delegated=`bc -l <<< "$(jq -r ".tokens" <<< $node_info)/1000000000000000000" 2>/dev/null`
 	local voting_power=`jq -r ".ValidatorInfo.VotingPower" <<< $status`
 	if [ -n "$wallet_address" ]; then
-		local balance=`bc -l <<< "$($daemon query bank balances "$wallet_address" -o json --node "$node_tcp" | jq -r ".balances[0].amount")/1000000000000000000"`
+		local balance=`bc -l <<< "$($daemon query bank balances "$wallet_address" -o json --node "$local_rpc" | jq -r ".balances[0].amount")/1000000000000000000"`
 	fi
 
 	# Output
